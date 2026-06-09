@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity WebGL Player | ClinicoPlay</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+  </head>
+  <body>
+    <div id="unity-container" class="unity-desktop">
+      <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+      <div id="unity-warning"> </div>
+      <div id="unity-footer">
+        <div id="unity-webgl-logo"></div>
+        <div id="unity-fullscreen-button"></div>
+        <div id="unity-build-title">ClinicoPlay</div>
+      </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <script>
+      // YOUR FIREBASE CONFIGURATION
+      const firebaseConfig = {
+        apiKey: "AIzaSyAvKGHsLjCXY-I5-7SP8UIq9VmJ5qohBhg",
+        authDomain: "quiz-online-5bcd1.firebaseapp.com",
+        projectId: "quiz-online-5bcd1",
+        storageBucket: "quiz-online-5bcd1.firebasestorage.app",
+        messagingSenderId: "1051342331393",
+        appId: "1:1051342331393:web:89d8d12bdbf346713f6a00"
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+
+      var container = document.querySelector("#unity-container");
+      var canvas = document.querySelector("#unity-canvas");
+      var loadingBar = document.querySelector("#unity-loading-bar");
+      var progressBarFull = document.querySelector("#unity-progress-bar-full");
+      var fullscreenButton = document.querySelector("#unity-fullscreen-button");
+      var warningBanner = document.querySelector("#unity-warning");
+
+      function unityShowBanner(msg, type) {
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') div.style = 'background: red; padding: 10px;';
+        else {
+          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+          setTimeout(function() {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/a9b6df486f644645fb70429e220420b7.loader.js";
+      var config = {
+        dataUrl: buildUrl + "/bb637c8d65b4dffb797884a903023f7c.data.br",
+        frameworkUrl: buildUrl + "/73f943d84350dfbf6ddfea6c8105b447.framework.js.br",
+        codeUrl: buildUrl + "/8a64f382031d49216d1c1fab2d71a2f8.wasm.br",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "ClinicoPlay",
+        productVersion: "1.0",
+        showBanner: unityShowBanner,
+      };
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      var myUnityInstance = null;
+
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          progressBarFull.style.width = 100 * progress + "%";
+        }).then((unityInstance) => {
+          myUnityInstance = unityInstance;
+          loadingBar.style.display = "none";
+          fullscreenButton.onclick = () => {
+            unityInstance.SetFullscreen(1);
+          };
+        }).catch((message) => {
+          alert(message);
+        });
+      };
+      document.body.appendChild(script);
+
+      // --- FIREBASE BRIDGE FUNCTIONS ---
+      window.firebaseRegisterUser = async (email, password, obj, cb, fb) => {
+          try {
+              await firebase.auth().createUserWithEmailAndPassword(email, password);
+              myUnityInstance.SendMessage(obj, cb, "Account created successfully!");
+          } catch (error) {
+              myUnityInstance.SendMessage(obj, fb, error.message);
+          }
+      };
+
+      window.firebaseLoginUser = async (email, password, obj, cb, fb) => {
+          try {
+              await firebase.auth().signInWithEmailAndPassword(email, password);
+              myUnityInstance.SendMessage(obj, cb, "Logged in successfully!");
+          } catch (error) {
+              myUnityInstance.SendMessage(obj, fb, error.message);
+          }
+      };
+
+      window.firebaseGoogleLogin = async (obj, cb, fb) => {
+          try {
+              const provider = new firebase.auth.GoogleAuthProvider();
+              await firebase.auth().signInWithPopup(provider);
+              myUnityInstance.SendMessage(obj, cb, "Google login successful!");
+          } catch (error) {
+              myUnityInstance.SendMessage(obj, fb, error.message);
+          }
+      };
+    </script>
+  </body>
+</html>
