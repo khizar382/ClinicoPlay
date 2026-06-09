@@ -6,9 +6,6 @@
     <title>Unity Web Player | ClinicoPlay</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   </head>
   <body>
     <div id="unity-container" class="unity-desktop">
@@ -55,12 +52,12 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/56bccb374d7be3700981e1775cc19f6d.loader.js";
+      var loaderUrl = buildUrl + "/9480796dbc4cac102423209f3924dd3b.loader.js";
       var config = {
         arguments: [],
-        dataUrl: buildUrl + "/f431aa4742a4a0f8f2a55a5a406434a8.data.unityweb",
+        dataUrl: buildUrl + "/2674aae53b5ba31427bf0be53839ec83.data.unityweb",
         frameworkUrl: buildUrl + "/73f943d84350dfbf6ddfea6c8105b447.framework.js.unityweb",
-        codeUrl: buildUrl + "/8a64f382031d49216d1c1fab2d71a2f8.wasm.unityweb",
+        codeUrl: buildUrl + "/c3f57a35323409893b84eda1deb282db.wasm.unityweb",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "ClinicoPlay",
@@ -132,48 +129,58 @@
 
       document.body.appendChild(script);
 
-      // --- FIREBASE BRIDGE FOR CLINICOPLAY ---
-      // YOUR FIREBASE CONFIGURATION
-      const firebaseConfig = {
-        apiKey: "AIzaSyAvKGHsLjCXY-I5-7SP8UIq9VmJ5qohBhg",
-        authDomain: "quiz-online-5bcd1.firebaseapp.com",
-        projectId: "quiz-online-5bcd1",
-        storageBucket: "quiz-online-5bcd1.firebasestorage.app",
-        messagingSenderId: "1051342331393",
-        appId: "1:1051342331393:web:89d8d12bdbf346713f6a00"
+      // --- FIREBASE SDK & CONFIG ---
+      var firebaseAppScript = document.createElement("script");
+      firebaseAppScript.src = "https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js";
+      document.body.appendChild(firebaseAppScript);
+
+      firebaseAppScript.onload = () => {
+        var firebaseAuthScript = document.createElement("script");
+        firebaseAuthScript.src = "https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js";
+        document.body.appendChild(firebaseAuthScript);
+
+        firebaseAuthScript.onload = () => {
+          const firebaseConfig = {
+            apiKey: "AIzaSyAvKGHsLjCXY-I5-7SP8UIq9VmJ5qohBhg",
+            authDomain: "quiz-online-5bcd1.firebaseapp.com",
+            projectId: "quiz-online-5bcd1",
+            storageBucket: "quiz-online-5bcd1.firebasestorage.app",
+            messagingSenderId: "1051342331393",
+            appId: "1:1051342331393:web:89d8d12bdbf346713f6a00"
+          };
+          firebase.initializeApp(firebaseConfig);
+
+          // --- FIREBASE BRIDGE FUNCTIONS ---
+          window.firebaseRegisterUser = async (email, password, obj, cb, fb) => {
+              try {
+                  await firebase.auth().createUserWithEmailAndPassword(email, password);
+                  window.myUnityInstance.SendMessage(obj, cb, "Account created successfully!");
+              } catch (error) {
+                  window.myUnityInstance.SendMessage(obj, fb, error.message);
+              }
+          };
+
+          window.firebaseLoginUser = async (email, password, obj, cb, fb) => {
+              try {
+                  await firebase.auth().signInWithEmailAndPassword(email, password);
+                  window.myUnityInstance.SendMessage(obj, cb, "Logged in successfully!");
+              } catch (error) {
+                  window.myUnityInstance.SendMessage(obj, fb, error.message);
+              }
+          };
+
+          window.firebaseGoogleLogin = async (obj, cb, fb) => {
+              try {
+                  const provider = new firebase.auth.GoogleAuthProvider();
+                  await firebase.auth().signInWithPopup(provider);
+                  window.myUnityInstance.SendMessage(obj, cb, "Google login successful!");
+              } catch (error) {
+                  window.myUnityInstance.SendMessage(obj, fb, error.message);
+              }
+          };
+        };
       };
 
-      // Initialize Firebase
-      firebase.initializeApp(firebaseConfig);
-
-      // --- FIREBASE BRIDGE FUNCTIONS ---
-      window.firebaseRegisterUser = async (email, password, obj, cb, fb) => {
-          try {
-              await firebase.auth().createUserWithEmailAndPassword(email, password);
-              window.myUnityInstance.SendMessage(obj, cb, "Account created successfully!");
-          } catch (error) {
-              window.myUnityInstance.SendMessage(obj, fb, error.message);
-          }
-      };
-
-      window.firebaseLoginUser = async (email, password, obj, cb, fb) => {
-          try {
-              await firebase.auth().signInWithEmailAndPassword(email, password);
-              window.myUnityInstance.SendMessage(obj, cb, "Logged in successfully!");
-          } catch (error) {
-              window.myUnityInstance.SendMessage(obj, fb, error.message);
-          }
-      };
-
-      window.firebaseGoogleLogin = async (obj, cb, fb) => {
-          try {
-              const provider = new firebase.auth.GoogleAuthProvider();
-              await firebase.auth().signInWithPopup(provider);
-              window.myUnityInstance.SendMessage(obj, cb, "Google login successful!");
-          } catch (error) {
-              window.myUnityInstance.SendMessage(obj, fb, error.message);
-          }
-      };
     </script>
   </body>
 </html>
