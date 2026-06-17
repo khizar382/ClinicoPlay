@@ -222,6 +222,48 @@
                   } catch (e) {
                       console.warn("[Firebase] Firestore logging skipped or failed:", e.message);
                   }
+
+                  // 3. Update Realtime Database Aggregated Stats via Atomic Transaction
+                  try {
+                      // Sanitize keys for Firebase compatibility (remove forbidden characters: . $ # [ ] /)
+                      const sanitizedQuestion = questionText.replace(/[\.\$\#\[\]\/]/g, "_").trim();
+                      const sanitizedOption = selectedOption.replace(/[\.\$\#\[\]\/]/g, "_").trim();
+                      
+                      const statsRef = firebase.database().ref("stats/" + sanitizedQuestion);
+                      await statsRef.transaction((currentData) => {
+                          if (currentData === null) {
+                              currentData = {
+                                  questionText: questionText,
+                                  totalAttempts: 0,
+                                  correctAttempts: 0,
+                                  correctPercentage: 0,
+                                  selections: {}
+                              };
+                          }
+                          
+                          // Safely initialize fields if they are missing
+                          if (!currentData.selections) {
+                              currentData.selections = {};
+                          }
+                          
+                          // Increment totals
+                          currentData.totalAttempts = (currentData.totalAttempts || 0) + 1;
+                          if (isCorrect) {
+                              currentData.correctAttempts = (currentData.correctAttempts || 0) + 1;
+                          }
+                          
+                          // Calculate correct percentage
+                          currentData.correctPercentage = Math.round((currentData.correctAttempts / currentData.totalAttempts) * 100);
+                          
+                          // Increment count for this specific option selected by the user
+                          currentData.selections[sanitizedOption] = (currentData.selections[sanitizedOption] || 0) + 1;
+                          
+                          return currentData;
+                      });
+                      console.log("[Firebase] Successfully updated aggregated metrics in Realtime Database!");
+                  } catch (e) {
+                      console.warn("[Firebase] Aggregated stats transaction skipped or failed:", e.message);
+                  }
               } catch (globalError) {
                   console.error("[Firebase] Error in firebaseLogAnswer:", globalError.message);
               }
