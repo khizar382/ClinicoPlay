@@ -52,12 +52,12 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/9480796dbc4cac102423209f3924dd3b.loader.js";
+      var loaderUrl = buildUrl + "/2e91df5893faad8c536748fcfb601d0c.loader.js";
       var config = {
         arguments: [],
-        dataUrl: buildUrl + "/2674aae53b5ba31427bf0be53839ec83.data.unityweb",
-        frameworkUrl: buildUrl + "/73f943d84350dfbf6ddfea6c8105b447.framework.js.unityweb",
-        codeUrl: buildUrl + "/c3f57a35323409893b84eda1deb282db.wasm.unityweb",
+        dataUrl: buildUrl + "/ec3ade97807c316de7a3a0d8b27f1bb2.data.unityweb",
+        frameworkUrl: buildUrl + "/d6e998f7072532f23bdd6a138a23c307.framework.js.unityweb",
+        codeUrl: buildUrl + "/6369371e47a71389b481124c0a8f2431.wasm.unityweb",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "ClinicoPlay",
@@ -139,10 +139,19 @@
         firebaseAuthScript.src = "https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js";
         document.body.appendChild(firebaseAuthScript);
 
-        firebaseAuthScript.onload = () => {
+        var firebaseDatabaseScript = document.createElement("script");
+        firebaseDatabaseScript.src = "https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js";
+        document.body.appendChild(firebaseDatabaseScript);
+
+        var firebaseFirestoreScript = document.createElement("script");
+        firebaseFirestoreScript.src = "https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js";
+        document.body.appendChild(firebaseFirestoreScript);
+
+        firebaseFirestoreScript.onload = () => {
           const firebaseConfig = {
             apiKey: "AIzaSyAvKGHsLjCXY-I5-7SP8UIq9VmJ5qohBhg",
             authDomain: "quiz-online-5bcd1.firebaseapp.com",
+            databaseURL: "https://quiz-online-5bcd1-default-rtdb.asia-southeast1.firebasedatabase.app/",
             projectId: "quiz-online-5bcd1",
             storageBucket: "quiz-online-5bcd1.firebasestorage.app",
             messagingSenderId: "1051342331393",
@@ -176,6 +185,45 @@
                   window.myUnityInstance.SendMessage(obj, cb, "Google login successful!");
               } catch (error) {
                   window.myUnityInstance.SendMessage(obj, fb, error.message);
+              }
+          };
+
+          window.firebaseLogAnswer = async (questionText, selectedOption, isCorrect, score) => {
+              try {
+                  const user = firebase.auth().currentUser;
+                  const userId = user ? user.uid : "anonymous";
+                  const email = user ? user.email : "anonymous";
+                  const timestamp = new Date().toISOString();
+
+                  const data = {
+                      userId: userId,
+                      email: email,
+                      question: questionText,
+                      selectedOption: selectedOption,
+                      isCorrect: isCorrect ? true : false,
+                      score: score,
+                      timestamp: timestamp
+                  };
+
+                  console.log("[Firebase Logging] Preparing to save answer data:", data);
+
+                  // 1. Try Realtime Database (push entry)
+                  try {
+                      await firebase.database().ref("responses").push(data);
+                      console.log("[Firebase] Successfully logged answer to Realtime Database!");
+                  } catch (e) {
+                      console.warn("[Firebase] Realtime Database logging skipped or failed:", e.message);
+                  }
+
+                  // 2. Try Firestore (add document)
+                  try {
+                      await firebase.firestore().collection("responses").add(data);
+                      console.log("[Firebase] Successfully logged answer to Firestore!");
+                  } catch (e) {
+                      console.warn("[Firebase] Firestore logging skipped or failed:", e.message);
+                  }
+              } catch (globalError) {
+                  console.error("[Firebase] Error in firebaseLogAnswer:", globalError.message);
               }
           };
         };
