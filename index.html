@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Player | ClinicoPlay</title>
+    <title>Unity WebGL Player | Quiz Game</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>❓</text></svg>">
     <link rel="stylesheet" href="TemplateData/style.css">
   </head>
@@ -35,7 +35,7 @@
             <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
           </svg>
         </div>
-        <div id="unity-build-title">ClinicoPlay</div>
+        <div id="unity-build-title">Quiz Game</div>
       </div>
     </div>
 
@@ -107,14 +107,14 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/2e91df5893faad8c536748fcfb601d0c.loader.js";
+      var loaderUrl = buildUrl + "/ClinicoPlay.loader.js";
       var config = {
-        dataUrl: buildUrl + "/586a0537de3dab3744b137aad9ebadde.data.unityweb",
-        frameworkUrl: buildUrl + "/d6e998f7072532f23bdd6a138a23c307.framework.js.unityweb",
-        codeUrl: buildUrl + "/6369371e47a71389b481124c0a8f2431.wasm.unityweb",
+        dataUrl: buildUrl + "/ClinicoPlay.data.gz",
+        frameworkUrl: buildUrl + "/ClinicoPlay.framework.js.gz",
+        codeUrl: buildUrl + "/ClinicoPlay.wasm.gz",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
-        productName: "ClinicoPlay",
+        productName: "Quiz Game",
         productVersion: "1.0",
         showBanner: unityShowBanner,
       };
@@ -187,8 +187,17 @@ document.body.appendChild(script);
           }
       };
 
-      window.firebaseLogAnswer = async (questionText, selectedOption, isCorrect, score) => {
+      window.firebaseResetPassword = async (email, obj, cb, fb) => {
           try {
+              await firebase.auth().sendPasswordResetEmail(email);
+              myUnityInstance.SendMessage(obj, cb, "Password reset email sent!");
+          } catch (error) {
+              myUnityInstance.SendMessage(obj, fb, error.message);
+          }
+      };
+
+      window.firebaseLogAnswer = async (questionText, selectedOption, isCorrect, score) => {
+try {
               const user = firebase.auth().currentUser;
               const userId = user ? user.uid : "anonymous";
               const email = user ? user.email : "anonymous";
@@ -214,13 +223,7 @@ document.body.appendChild(script);
                   console.warn("[Firebase] Realtime Database logging skipped or failed:", e.message);
               }
 
-              // 2. Try Firestore (add document)
-              try {
-                  await firebase.firestore().collection("responses").add(data);
-                  console.log("[Firebase] Successfully logged answer to Firestore!");
-              } catch (e) {
-                  console.warn("[Firebase] Firestore logging skipped or failed:", e.message);
-              }
+              // Firestore attempt removed because it hangs indefinitely if Firestore is not initialized in the Firebase Console.
 
               // 3. Update Realtime Database Aggregated Stats via Atomic Transaction
               try {
