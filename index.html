@@ -67,6 +67,27 @@
       var fullscreenButton = document.querySelector("#unity-fullscreen-button");
       var warningBanner = document.querySelector("#unity-warning");
 
+      // Force Portrait Responsive Scaling (9:16)
+      function resizeCanvas() {
+        var windowWidth = window.innerWidth;
+        var windowHeight = window.innerHeight;
+        var targetAspectRatio = 9 / 16;
+        var currentAspectRatio = windowWidth / windowHeight;
+
+        if (currentAspectRatio < targetAspectRatio) {
+          // Narrow screen (e.g., mobile portrait)
+          canvas.style.width = windowWidth + "px";
+          canvas.style.height = (windowWidth / targetAspectRatio) + "px";
+        } else {
+          // Wide screen (e.g., desktop monitor)
+          canvas.style.height = windowHeight + "px";
+          canvas.style.width = (windowHeight * targetAspectRatio) + "px";
+        }
+      }
+
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+
       function unityShowBanner(msg, type) {
         function updateBannerVisibility() {
           warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
@@ -88,7 +109,7 @@
       var buildUrl = "Build";
       var loaderUrl = buildUrl + "/2e91df5893faad8c536748fcfb601d0c.loader.js";
       var config = {
-        dataUrl: buildUrl + "/696404030dfa91db6d0fd6151661ca40.data.unityweb",
+        dataUrl: buildUrl + "/586a0537de3dab3744b137aad9ebadde.data.unityweb",
         frameworkUrl: buildUrl + "/d6e998f7072532f23bdd6a138a23c307.framework.js.unityweb",
         codeUrl: buildUrl + "/6369371e47a71389b481124c0a8f2431.wasm.unityweb",
         streamingAssetsUrl: "StreamingAssets",
